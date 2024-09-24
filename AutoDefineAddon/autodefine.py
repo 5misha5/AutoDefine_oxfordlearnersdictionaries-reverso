@@ -23,11 +23,14 @@ import sys
 from contextlib import contextmanager
 import pathlib
 from .oxford import Word, WordNotFound
+from . import reverso
 from http import cookiejar
 from aqt.addcards import AddCards
 from aqt.editor import Editor
 from aqt.qt import *
 from typing import Optional
+from jinja2 import Template
+
 
 add_dialog: Optional[AddCards] = None
 
@@ -89,6 +92,12 @@ IMAGE_FIELD = get_config_value(section, " 4. IMAGE_FIELD", 5)
 
 section = '6. shortcuts'
 PRIMARY_SHORTCUT = get_config_value(section, " 1. PRIMARY_SHORTCUT", "ctrl+alt+e")
+
+section = '7. translation'
+TRANSLATION = get_config_value(section, " 1. TRANSLATION", "ctrl+alt+e")
+TRANS_LANGUATE = get_config_value(section, " 2. TRANS_LANGUATE", "ukrainan")
+TRANSLATION_FIELD = get_config_value(section, " 3. TRANSLATION_FIELD", 6)
+
 
 if CORPUS.lower() == 'british':
     CORPUS_TAGS_PRIORITIZED = ['BrE', 'nAmE']
@@ -268,6 +277,10 @@ def get_data(note, is_bulk):
 
         if VERB_FORMS_FIELD:
             insert_into_field(note, str.join(' ', verb_forms), VERB_FORMS_FIELD, overwrite=True)
+
+        if TRANSLATION:
+            translation = get_translation(text = word, to_lang=TRANS_LANGUATE)
+            insert_into_field(note, translation, TRANSLATION_FIELD, overwrite=True)
 
         if OPEN_IMAGES_IN_BROWSER and not is_bulk:
             link = OPEN_IMAGES_IN_BROWSER_LINK.replace("$", word + SEARCH_APPEND)
@@ -478,6 +491,45 @@ def fill_audio_dict_prioritized(audio_dict, pronunciations, wordform):
                     audio_dict[audio_name] = {'wordform': [wordform], "audio_name": audio_name}
                 return
 
+def get_translation(text, to_lang):
+    print(text)
+    url = reverso.get_url(text)
+    html = reverso.get_page(url)
+
+    translations = reverso.get_translation(html)
+
+    template = """
+        <div id="translations-content">
+            {% for translation in Translations %}
+            <span class="translation">{{ translation }}</span>
+            {% endfor %}
+        </div>
+
+        <style>  #translations-content {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+  }
+
+  span.translation {
+    border: 1px #DEA82F solid;
+    border-top: 2px #DEA82F solid;
+    padding: 5px;
+    margin: 5px 0;
+    background-color: #FFFFB9;
+    color: #33260B;
+  }</style>
+
+        """
+
+    jinja_template = Template(template)
+
+    rendered_html = jinja_template.render(Translations=translations)
+    print(rendered_html)
+    return rendered_html
+
+
+
 
 def insert_into_field(note, text, field_id, overwrite=False):
     if len(note.fields) <= field_id:
@@ -595,7 +647,19 @@ def addCustomModel(col, name):
             'plainText': False,
             'collapsed': False,
             'excludeFromSearch': False
-        }
+        },
+        {
+            'name': 'Translation',
+            'ord': TRANSLATION_FIELD,
+            'sticky': False,
+            'rtl': False,
+            'font': 'Arial',
+            'size': 20,
+            'description': 'Insert a translation here',
+            'plainText': False,
+            'collapsed': False,
+            'excludeFromSearch': False
+        },
     ]
 
     model['css'] = """
@@ -652,6 +716,7 @@ i {
 <div class="front">{{Word}} {{Audio}} <br> {{VerbForms}}</div>
 <hr id="answer">
 <div class="img" id="img_div">{{Image}}</div>
+<div class="translate" id="trans_div">{{Translation}}</div>
 <hr id="image_hr">
 <div id="to_replace">
 {{DefinitionAndExamples}}
@@ -695,6 +760,7 @@ i {
 
 <hr id="answer">
 <div class="img" id="img_div">{{Image}}</div>
+<div class="translate" id="trans_div">{{Translation}}</div>
 <hr id="image_hr">
 <div id="to_replace">
 {{DefinitionAndExamples}}

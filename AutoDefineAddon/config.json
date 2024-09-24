@@ -34,5 +34,10 @@
   "6. shortcuts": {
     " 1. PRIMARY_SHORTCUT": "ctrl+alt+e",
     "todo": "doesntwork"
+  },
+  "7. translation": {
+    " 1. TRANSLATION": true,
+    " 2. TRANS_LANGUATE": "ukrainan",
+    " 3. TRANSLATION_FIELD": 6
   }
 }

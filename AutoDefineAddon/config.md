@@ -22,3 +22,6 @@ I recommend to use default settings!
 * `VERB_FORMS`: Add irregular verb forms
 * `VERB_FORMS_FIELD`: Irregular verb forms field
 * `PRIMARY_SHORTCUT`: Keyboard shortcut to run default AutoDefine.
+* `TRANSLATION`: Add translation to TRANSLATION_FIELD
+* `TRANS_LANGUATE`: Language to translate into (lowercase, the one in reverso link)
+* `TRANSLATION_FIELD`: Index of field to insert translation into
